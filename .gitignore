@@ -1,0 +1,12 @@
+# setting
+.vscode
+build
+
+# library
+ac-library
+
+# executable file
+problem.in
+problem.out
+
+
