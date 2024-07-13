@@ -83,6 +83,20 @@ void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
 
 ## 値の取得
 
+op(a[l],...,a[r-1])を求めている。
+
+- point: 根ノード以外の行ノードは偶奇の順に並んでいる
+
+区間値の取得も子から親へとたどっていき、区間に収まるものに対し評価していく。
+
+- l, r が一致したら最初の区間に含まれるものがすべて評価できたので終了
+- 左側の評価
+  - 偶数番目の時: l < r という条件から親を見ればよいので、評価せずに親ノードに遷移する
+  - 奇数番目の時: 左隣りは評価対象ではないので、そのノードを評価する。次に評価する右隣りのノードの親に遷移する。
+- 右側の評価
+  - 偶数番目の時: 次に評価するべきものは親ノードの左隣だから、評価せずに親ノードに遷移する。
+  - 奇数番目の時: 左隣りまでが評価対象なので、そのノードを評価する。次に評価するべきものはその親ノードの左隣だから、その親ノードに遷移する。
+
 ```cpp
 S prod(int l, int r) {
   assert(0 <= l && l <= r && r <= _n);
@@ -97,6 +111,54 @@ S prod(int l, int r) {
       r >>= 1;
   }
   return op(sml, smr);
+}
+```
+
+## セグメント木上での二分探索
+
+### max_right
+
+#### できること
+
+以下の条件を両方満たす r を(いずれか一つ)返す。
+
+- r = l もしくは f(op(a[l], a[l + 1], ..., a[r - 1])) = true
+- r = n もしくは f(op(a[l], a[l + 1], ..., a[r])) = false
+
+#### 使用例
+
+[ACL Practice Contest J](https://atcoder.jp/contests/practice2/tasks/practice2_j)
+
+[解答例](https://drken1215.hatenablog.com/entry/2023/11/14/033300)
+
+#### 実装
+
+```cpp
+template <bool (*f)(S)> int max_right(int l) {
+  return max_right(l, [](S x) { return f(x); });
+}
+template <class F> int max_right(int l, F f) {
+  assert(0 <= l && l <= _n);
+  assert(f(e()));
+  if (l == _n) return _n;
+  l += size;
+  S sm = e();
+  do {
+      while (l % 2 == 0) l >>= 1;
+      if (!f(op(sm, d[l]))) {
+          while (l < size) {
+              l = (2 * l);
+              if (f(op(sm, d[l]))) {
+                  sm = op(sm, d[l]);
+                  l++;
+              }
+          }
+          return l - size;
+      }
+      sm = op(sm, d[l]);
+      l++;
+  } while ((l & -l) != l);
+  return _n;
 }
 ```
 
